@@ -37,6 +37,50 @@ class FinanceSettings {
   final double lateFeeRate;
 }
 
+/// Receipt status values (ubiquitous language, shared with the web app).
+class ReceiptStatus {
+  static const String pending = 'Pending';
+  static const String paid = 'Paid';
+  static const String overdue = 'Overdue';
+}
+
+/// Tag appended to a receipt's `concept` when an admin waives the mora. It is
+/// persisted server-side so automatic late fees never re-charge a forgiven
+/// receipt (data value: never translated).
+const String kMoraWaivedMarker = 'mora perdonada';
+
+/// Raw receipt row used by the automatic late-fee (mora) pass.
+class ReceiptRaw {
+  ReceiptRaw({
+    this.id,
+    this.dueDate = '',
+    this.amount = 0,
+    this.status = ReceiptStatus.pending,
+    this.lateFee = 0,
+    this.concept = '',
+  });
+
+  final String? id;
+  final String dueDate;
+  final double amount;
+  final String status;
+  final double lateFee;
+  final String concept;
+
+  bool get isPaid => status == ReceiptStatus.paid;
+
+  bool get isWaived => concept.contains(kMoraWaivedMarker);
+
+  factory ReceiptRaw.fromJson(Map<String, dynamic> json) => ReceiptRaw(
+        id: json['id']?.toString(),
+        dueDate: json['dueDate']?.toString() ?? '',
+        amount: (json['amount'] as num?)?.toDouble() ?? 0,
+        status: json['status']?.toString() ?? ReceiptStatus.pending,
+        lateFee: (json['lateFee'] as num?)?.toDouble() ?? 0,
+        concept: json['concept']?.toString() ?? '',
+      );
+}
+
 class Payment {
   Payment({
     this.id,

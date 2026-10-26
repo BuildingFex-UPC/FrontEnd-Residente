@@ -67,6 +67,13 @@ class FinanceController extends Notifier<FinanceState> {
   Future<void> load() async {
     state = state.copyWith(loading: true, clearError: true);
     try {
+      // Apply automatic late fees (mora) first, but never let that side effect
+      // block the account from loading (mirrors the web/Compose `runCatching`).
+      try {
+        await _repo.autoApplyLateFees();
+      } catch (_) {
+        // Best-effort: ignore and still show the current account state.
+      }
       final fees = await _repo.listFees();
       final payments = await _repo.listPayments();
       final settings = await _repo.getSettings();

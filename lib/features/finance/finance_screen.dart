@@ -73,31 +73,33 @@ class FinanceScreen extends ConsumerWidget {
                   ),
                 ],
               ),
-              if (account.hasPending) ...[
-                const VerticalGap(16),
-                SectionCard(
-                  title: ref.tr('rfin.checkout.title'),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(ref.tr('rfin.checkout.subtitle'),
-                          style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
-                      const VerticalGap(12),
-                      AppButton(
-                        text: state.startingCheckout || state.confirming
-                            ? ref.tr('rfin.checkout.opening')
-                            : ref.tr('rfin.checkout.pay'),
-                        loading: state.startingCheckout || state.confirming,
-                        onPressed: () => ref
-                            .read(financeControllerProvider.notifier)
-                            .startCheckout(
-                              payerEmail: ref.read(sessionRepositoryProvider).current?.profile.email,
-                            ),
-                      ),
-                    ],
-                  ),
+              const VerticalGap(16),
+              SectionCard(
+                title: ref.tr('rfin.checkout.title'),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(ref.tr('rfin.checkout.subtitle'),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    const VerticalGap(12),
+                    // The card is always visible; the button is only enabled
+                    // when there is an outstanding balance (mirrors the app Compose).
+                    AppButton(
+                      text: state.startingCheckout || state.confirming
+                          ? ref.tr('rfin.checkout.opening')
+                          : ref.tr('rfin.checkout.pay'),
+                      loading: state.startingCheckout || state.confirming,
+                      onPressed: account.hasPending && !state.confirming
+                          ? () => ref
+                              .read(financeControllerProvider.notifier)
+                              .startCheckout(
+                                payerEmail: ref.read(sessionRepositoryProvider).current?.profile.email,
+                              )
+                          : null,
+                    ),
+                  ],
                 ),
-              ],
+              ),
               const VerticalGap(16),
               SectionCard(
                 title: ref.tr('rfin.fees.title'),
