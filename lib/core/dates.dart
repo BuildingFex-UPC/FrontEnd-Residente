@@ -64,6 +64,9 @@ class Dates {
     return '${names[date.month - 1]} ${date.year}';
   }
 
+  /// "14:05" style label for a 24h [hour]:[minute] pair.
+  static String timeLabel(int hour, int minute) => '${_pad2(hour)}:${_pad2(minute)}';
+
   /// ISO timestamp formatted as a local date + time.
   static String dateTimeLabel(String? iso, {String lang = 'es'}) {
     if (iso == null || iso.isEmpty) return '—';

@@ -1,70 +1,78 @@
 # BuildingFex — App de Residentes (Flutter)
 
-Resident-facing mobile app for the BuildingFex condominium. Built with Flutter +
-Riverpod, it talks to the same backend as the admin (Jetpack Compose) app with
-no server-side changes.
+Aplicación móvil dirigida a los residentes del condominio BuildingFex. Está
+construida con Flutter + Riverpod y se comunica con el mismo backend que la app
+de administradores (Jetpack Compose), sin requerir cambios del lado del servidor.
 
-The admin functionality lives in the Compose app (`../Clases/FrontEnd`); this
-app is resident-only. Admin accounts are blocked from signing in here
-(`err.ADMIN_LOGIN_BLOCKED`), and residents are blocked from the Compose app
-(`err.RESIDENT_LOGIN_BLOCKED`).
+La funcionalidad de administrador vive en la app Compose (`../Clases/FrontEnd`);
+esta app es solo para residentes. Las cuentas de administrador tienen bloqueado
+el inicio de sesión aquí (`err.ADMIN_LOGIN_BLOCKED`), y los residentes tienen
+bloqueado el acceso a la app Compose (`err.RESIDENT_LOGIN_BLOCKED`).
 
-## Features (7 screens)
+## Funcionalidades (7 pantallas)
 
-- **Login + invite activation** — sign in with email/password, or activate a
-  resident account with an invitation code (`304-k7m2` style; paste the whole
-  invite message and the code is extracted automatically).
-- **Dashboard** — greeting, pending balance, open/in-progress/resolved incident
-  counts, today's and upcoming reservations, active announcements.
-- **Finances** — pending balance, total paid, merged fees (receipts + fees via
-  `mapFees`), Mercado Pago Checkout Pro (demo flow or real WebView checkout with
-  redirect-param confirmation), and payment history.
-- **Common areas** — browse published spaces, pick a date/time slot (with already
-  booked slots shown), and reserve with client-side field/time/overlap
-  validation.
-- **My reservations** — edit each reservation's guest list (max 5), show a
-  guest-check-in QR, and share the invite link (expires 25 min after start).
-- **Incidents** — report new incidents, review status, edit description, delete.
-- **Support** — static FAQ catalog + support chat (create a ticket, append
-  messages).
-- **Settings** — profile, language toggle (ES/EN), log out.
+- **Inicio de sesión + activación por invitación** — ingresa con correo y
+  contraseña, o activa una cuenta de residente con un código de invitación
+  (formato `304-k7m2`; pega el mensaje completo y el código se extrae solo).
+- **Panel** — saludo, saldo pendiente, conteo de incidencias
+  (abiertas/en curso/resueltas), reservas de hoy y próximas, anuncios activos.
+- **Finanzas** — saldo pendiente, total pagado, cuotas consolidadas (recibos +
+  cuotas vía `mapFees`), Mercado Pago Checkout Pro (flujo demo o pago real en
+  WebView con confirmación por parámetro de redirección) y historial de pagos.
+- **Espacios comunes** — consulta los espacios publicados, elige una fecha y un
+  horario con **selectores de fecha y hora** (se muestran los horarios ya
+  reservados) y reserva con validación de campos, de horario y de solapamiento
+  en el cliente.
+- **Mis reservas** — edita la lista de invitados de cada reserva (máx. 5),
+  muestra el QR de registro de invitados y comparte el enlace de invitación
+  (vence 25 minutos después del inicio).
+- **Incidencias** — reporta nuevas incidencias, revisa su estado, edita la
+  descripción y elimínalas.
+- **Soporte** — catálogo de preguntas frecuentes + chat de soporte (crea un
+  ticket y agrega mensajes).
+- **Ajustes** — perfil, **edición de datos de cuenta** (nombre, DNI, dirección
+  y piso; el correo no es editable), cambio de contraseña, selector de idioma
+  (ES/EN) y cierre de sesión.
 
-## Architecture
+## Arquitectura
 
-Clean Architecture by feature + repository pattern + Riverpod state
-(Notifier/StateNotifier) + manual DI (`lib/core/repositories.dart`).
+Clean Architecture por feature + patrón repositorio + estado con Riverpod
+(Notifier/StateNotifier) + inyección de dependencias manual
+(`lib/core/repositories.dart`).
 
-- `lib/core/` — API client (dio + Bearer/401 interceptor + `apiCall` error
-  mapping), session (persisted via `shared_preferences`), i18n catalog (ES/EN),
-  dates, invite-code helpers, shared widgets, manual DI providers.
-- `lib/features/<name>/` — per feature: `*_repository.dart` (data),
-  `*_controller.dart` (state), `*_screen.dart` (UI), `*_models.dart` (domain).
+- `lib/core/` — cliente API (dio + interceptor Bearer/401 + mapeo de errores con
+  `apiCall`), sesión (persistida con `shared_preferences`), catálogo i18n
+  (ES/EN), fechas, utilidades de código de invitación, widgets compartidos y
+  providers de DI manual.
+- `lib/features/<nombre>/` — por feature: `*_repository.dart` (datos),
+  `*_controller.dart` (estado), `*_screen.dart` (UI), `*_models.dart` (dominio).
 
-State management and i18n mirror the admin app's patterns and key-based catalog
-so both clients stay in sync. Riverpod was chosen for the Mercado Pago flow and
-future SMS/email notifications (deferred until the backend exposes endpoints).
+La gestión del estado y el i18n replican los patrones y el catálogo por claves
+de la app de administrador para que ambos clientes se mantengan sincronizados.
+Se eligió Riverpod para el flujo de Mercado Pago y las futuras notificaciones
+por SMS/correo (diferidas hasta que el backend exponga los endpoints).
 
-## Configuration
+## Configuración
 
-The backend base URL is injected at build time and defaults to the deployed
-backend:
+La URL base del backend se inyecta en tiempo de compilación y, por defecto,
+apunta al backend desplegado:
 
 ```
 flutter run --dart-define=API_BASE_URL=http://localhost:5211   # local
-flutter run                                                     # uses default
+flutter run                                                     # usa la URL por defecto
 ```
 
-## Build & test
+## Compilación y pruebas
 
 ```
 flutter pub get
-flutter analyze      # 0 issues
-flutter test         # unit tests for InviteCodes, ReservationRules, i18n
+flutter analyze      # 0 incidencias
+flutter test         # pruebas unitarias de InviteCodes, ReservationRules e i18n
 flutter build apk --debug
 ```
 
-## Testing seeds
+## Credenciales de prueba
 
-- Admin: `admin@buildingfex.test` / any password (use the Compose app).
-- Resident: `residente@buildingfex.test`, invite code `301`,
+- Admin: `admin@buildingfex.test` / cualquier contraseña (usar la app Compose).
+- Residente: `residente@buildingfex.test`, código de invitación `301`,
   `ownerAdminId: admin-seed-1`.

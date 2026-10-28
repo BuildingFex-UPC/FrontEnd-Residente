@@ -11,6 +11,8 @@ class UserProfile {
     this.floor,
     this.code,
     this.ownerAdminId,
+    this.dni,
+    this.address,
   });
 
   final String id;
@@ -20,8 +22,30 @@ class UserProfile {
   final String? floor;
   final String? code;
   final String? ownerAdminId;
+  final String? dni;
+  final String? address;
 
   bool get isResident => role == 'resident';
+
+  /// Copy with the editable profile fields replaced (used after a profile
+  /// update so the session reflects the new values without a re-login).
+  UserProfile withProfile({
+    required String name,
+    String? dni,
+    String? address,
+    String? floor,
+  }) =>
+      UserProfile(
+        id: id,
+        name: name,
+        email: email,
+        role: role,
+        floor: floor,
+        code: code,
+        ownerAdminId: ownerAdminId,
+        dni: dni,
+        address: address,
+      );
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
         id: json['id']?.toString() ?? '',
@@ -31,6 +55,8 @@ class UserProfile {
         floor: json['floor']?.toString(),
         code: json['code']?.toString(),
         ownerAdminId: json['ownerAdminId']?.toString(),
+        dni: json['dni']?.toString(),
+        address: json['address']?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -41,6 +67,8 @@ class UserProfile {
         'floor': floor,
         'code': code,
         'ownerAdminId': ownerAdminId,
+        'dni': dni,
+        'address': address,
       };
 }
 

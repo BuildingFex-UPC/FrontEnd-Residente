@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/language_controller.dart';
@@ -12,6 +14,9 @@ import 'features/shell/shell_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Localized date/time picker labels (ES + EN).
+  await initializeDateFormatting();
 
   // Preload preferences and the persisted session before the first frame so
   // the network layer always has a valid token (or a clean signed-out state).
@@ -40,6 +45,12 @@ class BuildingFexResidentApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       locale: Locale(language),
+      supportedLocales: const [Locale('es'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       home: const _Root(),
     );
   }

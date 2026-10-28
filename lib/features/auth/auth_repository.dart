@@ -93,6 +93,42 @@ class AuthRepository {
         );
         return AuthResult.fromJson(_asMap(response.data));
       });
+
+  /// `PATCH /users/{id}/profile` — updates the editable profile fields.
+  /// The email (login) and department code are not editable here.
+  Future<UserProfile> updateProfile({
+    required String id,
+    required String name,
+    String? dni,
+    String? address,
+    String? floor,
+  }) =>
+      apiCall(() async {
+        final response = await _api.dio.patch<dynamic>(
+          'users/$id/profile',
+          data: {
+            'name': name,
+            'dni': dni,
+            'address': address,
+            'floor': floor,
+          },
+        );
+        return UserProfile.fromJson(_asMap(response.data));
+      });
+
+  /// `PATCH /users/{id}` — changes the password. The backend requires the
+  /// current email, so it is passed through unchanged (email stays fixed).
+  Future<void> changePassword({
+    required String id,
+    required String email,
+    required String newPassword,
+  }) =>
+      apiCall(() async {
+        await _api.dio.patch<dynamic>(
+          'users/$id',
+          data: {'email': email, 'password': newPassword},
+        );
+      });
 }
 
 Map<String, dynamic> _asMap(dynamic value) =>

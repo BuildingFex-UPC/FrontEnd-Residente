@@ -223,6 +223,83 @@ class AuthController extends Notifier<AuthState> {
     ref.read(sessionRepositoryProvider).clear();
     state = state.copyWith(clearSession: true, clearError: true);
   }
+
+  /// Updates the editable profile fields (name, DNI, address, floor). The
+  /// email and department code are not editable. On success the local session
+  /// is refreshed so the new values show immediately.
+  Future<bool> updateProfile({
+    required String name,
+    String? dni,
+    String? address,
+    String? floor,
+  }) async {
+    final session = state.session;
+    final profile = session?.profile;
+    if (profile == null) return false;
+
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty) {
+      state = state.copyWith(error: AppTexts.translate('set.edit.name_required'));
+      return false;
+    }
+
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      final updated = await ref.read(authRepositoryProvider).updateProfile(
+            id: profile.id,
+            name: trimmedName,
+            dni: dni?.trim(),
+            address: address?.trim(),
+            floor: floor?.trim(),
+          );
+      final merged = profile.withProfile(
+        name: updated.name,
+        dni: updated.dni,
+        address: updated.address,
+        floor: updated.floor,
+      );
+      await ref.read(sessionRepositoryProvider).updateProfile(merged);
+      state = state.copyWith(
+        loading: false,
+        session: Session(profile: merged, token: session!.token),
+        clearError: true,
+      );
+      return true;
+    } catch (e) {
+      state = state.copyWith(loading: false, error: _messageOf(e));
+      return false;
+    }
+  }
+
+  /// Changes the account password. The email is passed unchanged because the
+  /// backend requires it and login emails are not editable.
+  Future<bool> changePassword(String newPassword) async {
+    final profile = state.session?.profile;
+    if (profile == null) return false;
+
+    if (newPassword.length < 6) {
+      state = state.copyWith(error: AppTexts.translate('auth.error.min_6'));
+      return false;
+    }
+    if (profile.email == null || profile.email!.isEmpty) {
+      state = state.copyWith(error: AppTexts.translate('set.edit.no_email'));
+      return false;
+    }
+
+    state = state.copyWith(loading: true, clearError: true);
+    try {
+      await ref.read(authRepositoryProvider).changePassword(
+            id: profile.id,
+            email: profile.email!,
+            newPassword: newPassword,
+          );
+      state = state.copyWith(loading: false, clearError: true);
+      return true;
+    } catch (e) {
+      state = state.copyWith(loading: false, error: _messageOf(e));
+      return false;
+    }
+  }
 }
 
 final authControllerProvider =

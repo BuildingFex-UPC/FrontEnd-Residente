@@ -5,6 +5,7 @@ import '../../core/language_controller.dart';
 import '../../core/session_repository.dart';
 import '../../core/ui.dart';
 import '../auth/auth_controller.dart';
+import 'edit_account_screen.dart';
 
 /// Profile + language + session (settings).
 class SettingsScreen extends ConsumerWidget {
@@ -48,10 +49,36 @@ class SettingsScreen extends ConsumerWidget {
                   label: ref.tr('set.profile.email'),
                   value: profile.email ?? '—',
                 ),
+                if (profile.dni?.isNotEmpty == true)
+                  KeyValue(label: ref.tr('set.profile.dni'), value: profile.dni!),
+                if (profile.address?.isNotEmpty == true)
+                  KeyValue(label: ref.tr('set.profile.address'), value: profile.address!),
                 if (profile.floor?.isNotEmpty == true)
                   KeyValue(label: ref.tr('set.profile.floor'), value: profile.floor!),
                 if (profile.code?.isNotEmpty == true)
                   KeyValue(label: ref.tr('set.profile.department'), value: profile.code!),
+              ],
+            ),
+          ),
+          const VerticalGap(16),
+          SectionCard(
+            title: ref.tr('set.account.title'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  ref.tr('set.account.hint'),
+                  style: TextStyle(color: scheme.onSurfaceVariant),
+                ),
+                const VerticalGap(12),
+                AppOutlinedActionButton(
+                  text: ref.tr('set.account.edit'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const EditAccountScreen(),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

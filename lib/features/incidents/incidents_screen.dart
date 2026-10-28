@@ -36,60 +36,63 @@ class IncidentsScreen extends ConsumerWidget {
     return SafeArea(
       child: Stack(
         children: [
-          RefreshIndicator(
-            onRefresh: () => controller.reload(),
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(
-                  ref.tr('inc.resident.title'),
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  ref.tr('inc.resident.subtitle'),
-                  style: TextStyle(color: scheme.onSurfaceVariant),
-                ),
-                const VerticalGap(16),
-                SectionCard(
-                  title: ref.tr('inc.resident.reportCard'),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      ControlledTextField(
-                        label: ref.tr('inc.field.description'),
-                        placeholder: ref.tr('inc.field.descriptionPlaceholder'),
-                        value: state.description,
-                        maxLines: 4,
-                        onChanged: controller.setDescription,
-                      ),
-                      const VerticalGap(12),
-                      AppButton(
-                        text: state.submitting
-                            ? ref.tr('inc.action.sending')
-                            : ref.tr('inc.action.send'),
-                        loading: state.submitting,
-                        onPressed: controller.report,
-                      ),
-                    ],
+          // `Expanded` constrains the list so it can't overflow into the editor.
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () => controller.reload(),
+              child: ListView(
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    ref.tr('inc.resident.title'),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w600),
                   ),
-                ),
-                const VerticalGap(16),
-                SectionCard(
-                  title: ref.tr('inc.resident.listCard'),
-                  child: state.incidents.isEmpty
-                      ? EmptyState(ref.tr('inc.resident.empty'))
-                      : Column(
-                          children: [
-                            for (final incident in state.incidents)
-                              _IncidentTile(incident: incident),
-                          ],
+                  Text(
+                    ref.tr('inc.resident.subtitle'),
+                    style: TextStyle(color: scheme.onSurfaceVariant),
+                  ),
+                  const VerticalGap(16),
+                  SectionCard(
+                    title: ref.tr('inc.resident.reportCard'),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ControlledTextField(
+                          label: ref.tr('inc.field.description'),
+                          placeholder: ref.tr('inc.field.descriptionPlaceholder'),
+                          value: state.description,
+                          maxLines: 4,
+                          onChanged: controller.setDescription,
                         ),
-                ),
-                const VerticalGap(24),
-              ],
+                        const VerticalGap(12),
+                        AppButton(
+                          text: state.submitting
+                              ? ref.tr('inc.action.sending')
+                              : ref.tr('inc.action.send'),
+                          loading: state.submitting,
+                          onPressed: controller.report,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const VerticalGap(16),
+                  SectionCard(
+                    title: ref.tr('inc.resident.listCard'),
+                    child: state.incidents.isEmpty
+                        ? EmptyState(ref.tr('inc.resident.empty'))
+                        : Column(
+                            children: [
+                              for (final incident in state.incidents)
+                                _IncidentTile(incident: incident),
+                            ],
+                          ),
+                  ),
+                  const VerticalGap(24),
+                ],
+              ),
             ),
           ),
           if (state.editing != null) _EditDialog(state: state),
@@ -179,11 +182,19 @@ class _EditDialogState extends ConsumerState<_EditDialog> {
       alignment: Alignment.bottomCenter,
       child: Container(
         width: double.infinity,
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
         decoration: const BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        // Reserve room for the on-screen keyboard so the field and the save
+        // button are never covered while typing.
+        padding: EdgeInsets.fromLTRB(
+          20,
+          16,
+          20,
+          24 + MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

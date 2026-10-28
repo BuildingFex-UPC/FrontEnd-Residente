@@ -49,6 +49,15 @@ class SessionRepository {
     await _prefs.setString(_sessionKey, jsonEncode(session.toJson()));
   }
 
+  /// Replaces the active profile (e.g. after a profile edit) and persists it.
+  Future<void> updateProfile(UserProfile profile) async {
+    final session = _current;
+    if (session == null) return;
+    final updated = Session(profile: profile, token: session.token);
+    _current = updated;
+    await _prefs.setString(_sessionKey, jsonEncode(updated.toJson()));
+  }
+
   /// Clears the in-memory and persisted session.
   Future<void> clear() async {
     _current = null;
