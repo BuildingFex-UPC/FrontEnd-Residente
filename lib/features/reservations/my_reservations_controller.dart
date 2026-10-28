@@ -66,9 +66,7 @@ class MyReservationsState {
 
 /// "Mis reservas": guest-list editing, invite QR and share link.
 class MyReservationsController extends StateNotifier<MyReservationsState> {
-  MyReservationsController(this._ref) : super(const MyReservationsState()) {
-    _load();
-  }
+  MyReservationsController(this._ref) : super(const MyReservationsState());
 
   final Ref _ref;
 

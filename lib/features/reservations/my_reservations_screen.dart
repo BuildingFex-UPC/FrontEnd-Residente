@@ -10,11 +10,28 @@ import '../spaces/socialspaces_models.dart';
 import 'my_reservations_controller.dart';
 
 /// The resident's own reservations: guest list editing + invite QR.
-class MyReservationsScreen extends ConsumerWidget {
+class MyReservationsScreen extends ConsumerStatefulWidget {
   const MyReservationsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyReservationsScreen> createState() => _MyReservationsScreenState();
+}
+
+class _MyReservationsScreenState extends ConsumerState<MyReservationsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // The controller is cached (non-autoDispose), so its constructor only runs
+    // once. Reload every time this tab is shown so a reservation created in
+    // another tab (Espacios comunes) shows up here immediately.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(myReservationsControllerProvider.notifier).reload();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(myReservationsControllerProvider);
     final controller = ref.read(myReservationsControllerProvider.notifier);
 
@@ -24,7 +41,7 @@ class MyReservationsScreen extends ConsumerWidget {
       controller.dismissMessage();
     });
 
-    if (state.loading) return const FullScreenLoading();
+    if (state.loading && state.reservations.isEmpty) return const FullScreenLoading();
     if (state.error != null && state.reservations.isEmpty) {
       return ErrorState(
         state.error!,
@@ -38,31 +55,35 @@ class MyReservationsScreen extends ConsumerWidget {
         children: [
           // `Expanded` constrains the list so it can't overflow into the editor.
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(
-                  ref.tr('resv.title'),
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  ref.tr('resv.subtitle'),
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-                const VerticalGap(16),
-                if (state.reservations.isEmpty)
-                  EmptyState(ref.tr('resv.empty'))
-                else
-                  for (final reservation in state.reservations)
-                    _ReservationCard(
-                      reservation: reservation,
-                      spaceName: state.spacesById[reservation.spaceId]?.name,
-                      onEditGuests: () => controller.openEditor(reservation),
-                    ),
-              ],
+            child: RefreshIndicator(
+              onRefresh: () => controller.reload(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    ref.tr('resv.title'),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    ref.tr('resv.subtitle'),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                  const VerticalGap(16),
+                  if (state.reservations.isEmpty)
+                    EmptyState(ref.tr('resv.empty'))
+                  else
+                    for (final reservation in state.reservations)
+                      _ReservationCard(
+                        reservation: reservation,
+                        spaceName: state.spacesById[reservation.spaceId]?.name,
+                        onEditGuests: () => controller.openEditor(reservation),
+                      ),
+                ],
+              ),
             ),
           ),
           if (state.editing != null)
