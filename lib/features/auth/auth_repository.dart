@@ -94,14 +94,17 @@ class AuthRepository {
         return AuthResult.fromJson(_asMap(response.data));
       });
 
-  /// `PATCH /users/{id}/profile` — updates the editable profile fields.
-  /// The email (login) and department code are not editable here.
+  /// `PATCH /users/{id}/profile` — updates the editable profile fields
+  /// (name, DNI, address, floor, email and avatar). The department code is
+  /// not editable here because the admin assigns it.
   Future<UserProfile> updateProfile({
     required String id,
     required String name,
     String? dni,
     String? address,
     String? floor,
+    String? email,
+    String? avatar,
   }) =>
       apiCall(() async {
         final response = await _api.dio.patch<dynamic>(
@@ -111,6 +114,8 @@ class AuthRepository {
             'dni': dni,
             'address': address,
             'floor': floor,
+            'email': email,
+            'avatar': avatar,
           },
         );
         return UserProfile.fromJson(_asMap(response.data));

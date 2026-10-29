@@ -69,10 +69,12 @@ class IncidentsState {
 }
 
 /// Resident incidents: report new ones and review their status.
+///
+/// The constructor does NOT load: the provider is cached (non-autoDispose)
+/// and the shell reuses it, so the screen triggers [reload] each time the tab
+/// is opened to pick up changes made by the admin in the meantime.
 class IncidentsController extends StateNotifier<IncidentsState> {
-  IncidentsController(this._ref) : super(const IncidentsState()) {
-    _load();
-  }
+  IncidentsController(this._ref) : super(const IncidentsState());
 
   final Ref _ref;
 

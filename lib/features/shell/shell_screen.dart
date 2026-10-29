@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/avatar.dart';
 import '../../core/language_controller.dart';
 import '../../core/session_repository.dart';
 import '../../core/ui.dart';
@@ -65,6 +66,7 @@ class _ResidentShellState extends ConsumerState<ResidentShell> {
                 name: session?.profile.name ?? '',
                 email: session?.profile.email ?? '',
                 role: ref.tr('shell.role.resident'),
+                avatar: session?.profile.avatar,
               ),
               Expanded(
                 child: ListView(
@@ -108,11 +110,19 @@ class _ResidentShellState extends ConsumerState<ResidentShell> {
 }
 
 class _DrawerHeader extends StatelessWidget {
-  const _DrawerHeader({required this.name, required this.email, required this.role});
+  const _DrawerHeader({
+    required this.name,
+    required this.email,
+    required this.role,
+    this.avatar,
+  });
 
   final String name;
   final String email;
   final String role;
+
+  /// Profile icon: preset ("preset|😀|#FF5722") or a gallery photo data URL.
+  final String? avatar;
 
   @override
   Widget build(BuildContext context) {
@@ -121,11 +131,7 @@ class _DrawerHeader extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 24,
-            backgroundColor: scheme.primaryContainer,
-            child: Icon(Icons.person, color: scheme.onPrimaryContainer),
-          ),
+          AvatarView(avatar: avatar, radius: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

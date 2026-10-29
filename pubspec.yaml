@@ -26,6 +26,9 @@ dependencies:
   qr_flutter: ^4.1.0
   intl: ^0.20.2
   share_plus: ^11.0.0
+  # Profile avatar: pick a photo from the gallery (compressed before upload).
+  image_picker: ^1.1.2
+  image: ^4.3.0
 
 dev_dependencies:
   flutter_test:

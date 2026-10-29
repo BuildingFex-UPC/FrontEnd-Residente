@@ -13,6 +13,7 @@ class UserProfile {
     this.ownerAdminId,
     this.dni,
     this.address,
+    this.avatar,
   });
 
   final String id;
@@ -25,6 +26,9 @@ class UserProfile {
   final String? dni;
   final String? address;
 
+  /// Profile icon: "preset|😀|#FF5722" or a "data:image/..." photo, else null.
+  final String? avatar;
+
   bool get isResident => role == 'resident';
 
   /// Copy with the editable profile fields replaced (used after a profile
@@ -34,17 +38,20 @@ class UserProfile {
     String? dni,
     String? address,
     String? floor,
+    String? email,
+    String? avatar,
   }) =>
       UserProfile(
         id: id,
         name: name,
-        email: email,
+        email: email ?? this.email,
         role: role,
         floor: floor,
         code: code,
         ownerAdminId: ownerAdminId,
         dni: dni,
         address: address,
+        avatar: avatar ?? this.avatar,
       );
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -57,6 +64,7 @@ class UserProfile {
         ownerAdminId: json['ownerAdminId']?.toString(),
         dni: json['dni']?.toString(),
         address: json['address']?.toString(),
+        avatar: json['avatar']?.toString(),
       );
 
   Map<String, dynamic> toJson() => {
@@ -69,6 +77,7 @@ class UserProfile {
         'ownerAdminId': ownerAdminId,
         'dni': dni,
         'address': address,
+        'avatar': avatar,
       };
 }
 

@@ -1,15 +1,21 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 
+import '../../core/avatar.dart';
 import '../../core/session.dart';
 import '../../core/session_repository.dart';
 import '../../core/ui.dart';
 import '../auth/auth_controller.dart';
 
-/// Edit the resident's account data.
+/// Edit the resident's account data: personal fields, login email and the
+/// profile icon shown in the drawer (preset emoji+color or a gallery photo).
 ///
-/// The email (login) and the department code are read-only by design: the
-/// email identifies the login and the code is assigned by the admin.
+/// The department code stays read-only because the admin assigns it.
 class EditAccountScreen extends ConsumerStatefulWidget {
   const EditAccountScreen({super.key});
 
@@ -30,11 +36,23 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   late final TextEditingController _floor = TextEditingController(
     text: _profile?.floor ?? '',
   );
+  late final TextEditingController _email = TextEditingController(
+    text: _profile?.email ?? '',
+  );
 
   final _password = TextEditingController();
   final _passwordConfirm = TextEditingController();
 
   bool _obscurePassword = true;
+
+  /// Pending avatar (not persisted until "Save changes").
+  String? _avatar;
+
+  @override
+  void initState() {
+    super.initState();
+    _avatar = _profile?.avatar;
+  }
 
   @override
   void dispose() {
@@ -42,6 +60,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     _dni.dispose();
     _address.dispose();
     _floor.dispose();
+    _email.dispose();
     _password.dispose();
     _passwordConfirm.dispose();
     super.dispose();
@@ -54,7 +73,6 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     );
     final loading = ref.watch(authControllerProvider.select((s) => s.loading));
     final scheme = Theme.of(context).colorScheme;
-    final email = profile?.email ?? '—';
 
     return Scaffold(
       appBar: AppBar(title: Text(ref.tr('set.edit.title'))),
@@ -69,6 +87,69 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
             bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
           ),
           children: [
+            SectionCard(
+              title: ref.tr('set.edit.avatar'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    ref.tr('set.edit.avatar_hint'),
+                    style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+                  ),
+                  const VerticalGap(12),
+                  Center(child: AvatarView(avatar: _avatar, radius: 36)),
+                  const VerticalGap(12),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final emoji in AvatarValue.emojis)
+                        _PresetButton(
+                          emoji: emoji,
+                          color: AvatarValue.colorOf(_avatar) ?? scheme.primaryContainer,
+                          selected: AvatarValue.emojiOf(_avatar) == emoji,
+                          onTap: () => setState(
+                            () => _avatar = AvatarValue.preset(
+                              emoji,
+                              AvatarValue.colorOf(_avatar) ?? scheme.primaryContainer,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const VerticalGap(12),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final color in AvatarValue.colors)
+                        _ColorButton(
+                          color: color,
+                          selected: AvatarValue.colorOf(_avatar) == color,
+                          onTap: () => setState(() {
+                            final emoji = AvatarValue.emojiOf(_avatar) ?? '😀';
+                            _avatar = AvatarValue.preset(emoji, color);
+                          }),
+                        ),
+                    ],
+                  ),
+                  const VerticalGap(12),
+                  AppOutlinedActionButton(
+                    text: ref.tr('set.edit.avatar_photo'),
+                    onPressed: () => _pickPhoto(),
+                  ),
+                  if (_avatar != null)
+                    TextButton.icon(
+                      onPressed: () => setState(() => _avatar = null),
+                      icon: const Icon(Icons.refresh),
+                      label: Text(ref.tr('set.edit.avatar_default')),
+                    ),
+                ],
+              ),
+            ),
+            const VerticalGap(16),
             SectionCard(
               title: ref.tr('set.edit.personal'),
               child: Column(
@@ -99,13 +180,22 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                     onChanged: (v) => _floor.text = v,
                   ),
                   const VerticalGap(12),
-                  // Email and code are not editable (login identity + admin data).
-                  KeyValue(label: ref.tr('set.profile.email'), value: email),
-                  if (profile?.code?.isNotEmpty == true)
+                  // The email is editable (it is the login) but validated by
+                  // format and uniqueness on the backend.
+                  ControlledTextField(
+                    label: ref.tr('set.profile.email'),
+                    value: _email.text,
+                    onChanged: (v) => _email.text = v,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  if (profile?.code?.isNotEmpty == true) ...[
+                    const VerticalGap(12),
+                    // Department code is assigned by the admin (read-only).
                     KeyValue(
                       label: ref.tr('set.profile.department'),
                       value: profile!.code!,
                     ),
+                  ],
                   const VerticalGap(16),
                   AppButton(
                     text: ref.tr('set.edit.save'),
@@ -168,6 +258,50 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   UserProfile? get _profile =>
       ref.read(sessionRepositoryProvider).current?.profile;
 
+  /// Picks a photo, shrinks it (512px max, JPEG) and stores it as a small
+  /// data URL so the backend keeps the profile icon self-contained.
+  Future<void> _pickPhoto() async {
+    try {
+      final picked = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 512,
+        maxHeight: 512,
+      );
+      if (picked == null) return;
+      final bytes = await picked.readAsBytes();
+      final dataUrl = _encodeAvatar(bytes);
+      if (dataUrl == null) {
+        _showMessage(ref.tr('set.edit.avatar_photo_failed'), error: true);
+        return;
+      }
+      setState(() => _avatar = dataUrl);
+    } catch (_) {
+      // Camera/gallery denied or unavailable: surface a friendly error.
+      _showMessage(ref.tr('set.edit.avatar_photo_failed'), error: true);
+    }
+  }
+
+  /// Re-encodes [bytes] as a compressed JPEG data URL. Returns null when the
+  /// image cannot be decoded or stays too large for the backend cap.
+  static String? _encodeAvatar(Uint8List bytes, {int quality = 75}) {
+    final decoded = img.decodeImage(bytes);
+    if (decoded == null) return null;
+    final resized = decoded.width > 512 || decoded.height > 512
+        ? img.copyResize(
+            decoded,
+            width: decoded.width >= decoded.height ? 512 : null,
+            height: decoded.height > decoded.width ? 512 : null,
+          )
+        : decoded;
+    for (var q = quality; q >= 30; q -= 15) {
+      final encoded = img.encodeJpg(resized, quality: q);
+      final dataUrl = 'data:image/jpeg;base64,${base64Encode(encoded)}';
+      // Backend cap is 600k chars; keep a safety margin.
+      if (dataUrl.length <= 500_000) return dataUrl;
+    }
+    return null;
+  }
+
   Future<void> _saveProfile() async {
     final ok = await ref
         .read(authControllerProvider.notifier)
@@ -176,6 +310,8 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
           dni: _dni.text,
           address: _address.text,
           floor: _floor.text,
+          email: _email.text,
+          avatar: _avatar,
         );
     if (!mounted) return;
     if (ok) {
@@ -219,5 +355,75 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
           backgroundColor: error ? Theme.of(context).colorScheme.error : null,
         ),
       );
+  }
+}
+
+class _PresetButton extends StatelessWidget {
+  const _PresetButton({
+    required this.emoji,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String emoji;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 40,
+        height: 40,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.25),
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selected ? scheme.primary : Colors.transparent,
+            width: 2,
+          ),
+        ),
+        child: Text(emoji, style: const TextStyle(fontSize: 20)),
+      ),
+    );
+  }
+}
+
+class _ColorButton extends StatelessWidget {
+  const _ColorButton({
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: selected ? scheme.primary : Colors.transparent,
+            width: 3,
+          ),
+        ),
+      ),
+    );
   }
 }

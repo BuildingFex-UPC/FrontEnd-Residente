@@ -8,11 +8,28 @@ import 'incidents_controller.dart';
 import 'incidents_repository.dart';
 
 /// Report and track the resident's incidents.
-class IncidentsScreen extends ConsumerWidget {
+class IncidentsScreen extends ConsumerStatefulWidget {
   const IncidentsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<IncidentsScreen> createState() => _IncidentsScreenState();
+}
+
+class _IncidentsScreenState extends ConsumerState<IncidentsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // The controller is cached (non-autoDispose), so its constructor only runs
+    // once. Reload every time this tab is shown so an incident the admin
+    // edited (status, provider) is reflected without restarting the app.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(incidentsControllerProvider.notifier).reload();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(incidentsControllerProvider);
     final controller = ref.read(incidentsControllerProvider.notifier);
 
@@ -41,6 +58,7 @@ class IncidentsScreen extends ConsumerWidget {
             child: RefreshIndicator(
               onRefresh: () => controller.reload(),
               child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: const EdgeInsets.all(16),
                 children: [
                   Text(
