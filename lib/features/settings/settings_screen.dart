@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/language_controller.dart';
+import '../../core/invite_codes.dart';
 import '../../core/session_repository.dart';
 import '../../core/ui.dart';
 import '../auth/auth_controller.dart';
@@ -56,7 +57,10 @@ class SettingsScreen extends ConsumerWidget {
                 if (profile.floor?.isNotEmpty == true)
                   KeyValue(label: ref.tr('set.profile.floor'), value: profile.floor!),
                 if (profile.code?.isNotEmpty == true)
-                  KeyValue(label: ref.tr('set.profile.department'), value: profile.code!),
+                  KeyValue(
+                    label: ref.tr('set.profile.department'),
+                    value: InviteCodes.departmentOf(profile.code),
+                  ),
               ],
             ),
           ),

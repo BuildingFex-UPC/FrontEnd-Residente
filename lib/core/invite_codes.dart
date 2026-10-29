@@ -44,6 +44,14 @@ class InviteCodes {
 
   /// Codes worth searching automatically while the user types.
   static bool canAutoSearch(String code) => _auto.hasMatch(code);
+
+  /// Department number of a code ("201-fewx" → "201"); legacy codes are
+  /// already the plain department ("304" → "304").
+  static String departmentOf(String? code) {
+    final clean = (code ?? '').trim();
+    if (clean.isEmpty) return '—';
+    return clean.split('-').first;
+  }
 }
 
 /// Builds the absolute URL shared with guests.

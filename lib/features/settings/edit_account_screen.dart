@@ -7,6 +7,7 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/avatar.dart';
+import '../../core/invite_codes.dart';
 import '../../core/session.dart';
 import '../../core/session_repository.dart';
 import '../../core/ui.dart';
@@ -99,43 +100,6 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                   const VerticalGap(12),
                   Center(child: AvatarView(avatar: _avatar, radius: 36)),
                   const VerticalGap(12),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final emoji in AvatarValue.emojis)
-                        _PresetButton(
-                          emoji: emoji,
-                          color: AvatarValue.colorOf(_avatar) ?? scheme.primaryContainer,
-                          selected: AvatarValue.emojiOf(_avatar) == emoji,
-                          onTap: () => setState(
-                            () => _avatar = AvatarValue.preset(
-                              emoji,
-                              AvatarValue.colorOf(_avatar) ?? scheme.primaryContainer,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const VerticalGap(12),
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final color in AvatarValue.colors)
-                        _ColorButton(
-                          color: color,
-                          selected: AvatarValue.colorOf(_avatar) == color,
-                          onTap: () => setState(() {
-                            final emoji = AvatarValue.emojiOf(_avatar) ?? '😀';
-                            _avatar = AvatarValue.preset(emoji, color);
-                          }),
-                        ),
-                    ],
-                  ),
-                  const VerticalGap(12),
                   AppOutlinedActionButton(
                     text: ref.tr('set.edit.avatar_photo'),
                     onPressed: () => _pickPhoto(),
@@ -190,10 +154,10 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                   ),
                   if (profile?.code?.isNotEmpty == true) ...[
                     const VerticalGap(12),
-                    // Department code is assigned by the admin (read-only).
+                    // Department number only; the invite code is admin data.
                     KeyValue(
                       label: ref.tr('set.profile.department'),
-                      value: profile!.code!,
+                      value: InviteCodes.departmentOf(profile!.code),
                     ),
                   ],
                   const VerticalGap(16),
@@ -355,75 +319,5 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
           backgroundColor: error ? Theme.of(context).colorScheme.error : null,
         ),
       );
-  }
-}
-
-class _PresetButton extends StatelessWidget {
-  const _PresetButton({
-    required this.emoji,
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String emoji;
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 40,
-        height: 40,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.25),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selected ? scheme.primary : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Text(emoji, style: const TextStyle(fontSize: 20)),
-      ),
-    );
-  }
-}
-
-class _ColorButton extends StatelessWidget {
-  const _ColorButton({
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: selected ? scheme.primary : Colors.transparent,
-            width: 3,
-          ),
-        ),
-      ),
-    );
   }
 }

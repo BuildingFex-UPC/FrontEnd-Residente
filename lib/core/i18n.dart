@@ -309,7 +309,7 @@ const Map<String, TextPair> _catalog = {
   'set.edit.password_mismatch': (es: 'Las contraseñas no coinciden.', en: 'The passwords do not match.'),
   'set.edit.password_changed': (es: 'Contraseña actualizada correctamente.', en: 'Password updated successfully.'),
   'set.edit.avatar': (es: 'Icono de perfil', en: 'Profile icon'),
-  'set.edit.avatar_hint': (es: 'Elige un icono o usa una foto de tu galería.', en: 'Pick an icon or use a photo from your gallery.'),
+  'set.edit.avatar_hint': (es: 'Elige una foto de tu galería para tu icono de perfil.', en: 'Pick a photo from your gallery for your profile icon.'),
   'set.edit.avatar_photo': (es: 'Usar foto de la galería', en: 'Use photo from gallery'),
   'set.edit.avatar_default': (es: 'Usar icono predeterminado', en: 'Use default icon'),
   'set.edit.avatar_photo_failed': (es: 'No se pudo cargar la foto. Intenta con otra imagen más pequeña.', en: 'The photo could not be loaded. Try a smaller image.'),
