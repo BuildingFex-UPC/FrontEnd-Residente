@@ -11,30 +11,47 @@ import 'finance_models.dart';
 import 'payment_webview.dart';
 
 /// Resident finances: pending balance, Mercado Pago checkout, fees and history.
-class FinanceScreen extends ConsumerWidget {
+class FinanceScreen extends ConsumerStatefulWidget {
   const FinanceScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<FinanceScreen> createState() => _FinanceScreenState();
+}
+
+class _FinanceScreenState extends ConsumerState<FinanceScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // The controller is cached (non-autoDispose), so its constructor only runs
+    // once. Reload every time this tab is shown so a receipt the admin created
+    // or a payment they registered is reflected without restarting the app.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(financeControllerProvider.notifier).load();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(financeControllerProvider);
     final language = ref.watch(languageControllerProvider);
 
     // React to a checkout being started: open Mercado Pago in a WebView and
     // feed the redirect params back into the controller.
     ref.listen(financeControllerProvider.select((s) => s.checkoutUrl), (prev, next) {
-      if (next != null && next.isNotEmpty) _openCheckout(context, ref, next);
+      if (next != null && next.isNotEmpty) _openCheckout(context, next);
     });
 
     return Scaffold(
       body: SafeArea(
-        child: _buildBody(context, ref, state, language),
+        child: _buildBody(context, state, language),
       ),
       // Confirmation / status dialogs.
       floatingActionButton: null,
     );
   }
 
-  Widget _buildBody(BuildContext context, WidgetRef ref, FinanceState state, String language) {
+  Widget _buildBody(BuildContext context, FinanceState state, String language) {
     if (state.loading && state.account == null) return const FullScreenLoading();
     if (state.error != null && state.account == null) {
       return ErrorState(state.error!, retryLabel: '↻', onRetry: () => ref.read(financeControllerProvider.notifier).load());
@@ -137,7 +154,7 @@ class FinanceScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _openCheckout(BuildContext context, WidgetRef ref, String url) async {
+  Future<void> _openCheckout(BuildContext context, String url) async {
     final controller = ref.read(financeControllerProvider.notifier);
     final result = await Navigator.of(context).push<Map<String, String>>(
       MaterialPageRoute(
