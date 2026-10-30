@@ -122,7 +122,21 @@ class ResidentAccount {
   double get pendingAmount =>
       fees.where((f) => !f.isPaid).fold(0.0, (sum, f) => sum + f.amount);
 
-  double get paidTotal => payments.fold(0.0, (sum, p) => sum + p.amount);
+  /// Lifetime paid total.
+  ///
+  /// Derived from the fees marked as paid (the billing truth) rather than
+  /// from the `payments` ledger. This keeps the card consistent with:
+  ///   - the paid rows shown in "Mis cuotas" below,
+  ///   - the "Pagado" KPI on the dashboard (`DashboardState.financeSummary`), and
+  ///   - the admin's "recaudado" (which sums Paid receipts).
+  /// It also keeps `paidTotal + pendingAmount` equal to the total billed,
+  /// since both now come from the same ledger. Summing `payments` instead
+  /// made this card drift whenever a receipt was settled without a matching
+  /// Payment row (e.g. debts the admin reconciled before the admin started
+  /// recording a Payment too). The payment rows remain the transaction
+  /// history rendered in "Historial de pagos".
+  double get paidTotal =>
+      fees.where((f) => f.isPaid).fold(0.0, (sum, f) => sum + f.amount);
 
   bool get hasPending => fees.any((f) => !f.isPaid);
 }
