@@ -95,8 +95,8 @@ class AuthRepository {
       });
 
   /// `PATCH /users/{id}/profile` — updates the editable profile fields
-  /// (name, DNI, address, floor, email and avatar). The department code is
-  /// not editable here because the admin assigns it.
+  /// (name, DNI, address, department code+floor, email and avatar). The
+  /// department code is editable here so the resident can change apartment.
   Future<UserProfile> updateProfile({
     required String id,
     required String name,
@@ -105,6 +105,7 @@ class AuthRepository {
     String? floor,
     String? email,
     String? avatar,
+    String? code,
   }) =>
       apiCall(() async {
         final response = await _api.dio.patch<dynamic>(
@@ -116,6 +117,7 @@ class AuthRepository {
             'floor': floor,
             'email': email,
             'avatar': avatar,
+            'code': code,
           },
         );
         return UserProfile.fromJson(_asMap(response.data));

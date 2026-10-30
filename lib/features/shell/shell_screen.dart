@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/avatar.dart';
 import '../../core/language_controller.dart';
-import '../../core/session_repository.dart';
 import '../../core/ui.dart';
 import '../auth/auth_controller.dart';
 import '../dashboard/dashboard_screen.dart';
@@ -46,9 +45,9 @@ class _ResidentShellState extends ConsumerState<ResidentShell> {
 
   @override
   Widget build(BuildContext context) {
-    final session = ref.watch(
-      sessionRepositoryProvider.select((repo) => repo.current),
-    );
+    // Watch the auth controller (reactive) so the drawer reflects an edited
+    // name/email/avatar immediately, without waiting for a screen change.
+    final session = ref.watch(authControllerProvider.select((s) => s.session));
     final language = ref.watch(languageControllerProvider);
     final selected =
         _items.firstWhere((item) => item.id == _selectedId, orElse: () => _items.first);

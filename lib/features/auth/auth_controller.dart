@@ -224,10 +224,9 @@ class AuthController extends Notifier<AuthState> {
     state = state.copyWith(clearSession: true, clearError: true);
   }
 
-  /// Updates the editable profile fields (name, DNI, address, floor, email
-  /// and avatar). The department code is not editable because the admin
-  /// assigns it. On success the local session is refreshed so the new values
-  /// show immediately.
+  /// Updates the editable profile fields (name, DNI, address, department
+  /// code+floor, email and avatar). On success the local session is refreshed
+  /// so the new values show immediately across the app.
   Future<bool> updateProfile({
     required String name,
     String? dni,
@@ -235,6 +234,7 @@ class AuthController extends Notifier<AuthState> {
     String? floor,
     String? email,
     String? avatar,
+    String? code,
   }) async {
     final session = state.session;
     final profile = session?.profile;
@@ -264,6 +264,7 @@ class AuthController extends Notifier<AuthState> {
             floor: floor?.trim(),
             email: trimmedEmail?.isEmpty ?? true ? null : trimmedEmail,
             avatar: avatar,
+            code: code?.trim(),
           );
       final merged = profile.withProfile(
         name: updated.name,
@@ -272,6 +273,7 @@ class AuthController extends Notifier<AuthState> {
         floor: updated.floor,
         email: updated.email,
         avatar: updated.avatar,
+        code: updated.code,
       );
       await ref.read(sessionRepositoryProvider).updateProfile(merged);
       state = state.copyWith(

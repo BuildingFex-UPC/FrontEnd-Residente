@@ -7,16 +7,15 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/avatar.dart';
+import '../../core/department_number.dart';
 import '../../core/invite_codes.dart';
 import '../../core/session.dart';
-import '../../core/session_repository.dart';
 import '../../core/ui.dart';
 import '../auth/auth_controller.dart';
 
-/// Edit the resident's account data: personal fields, login email and the
-/// profile icon shown in the drawer (preset emoji+color or a gallery photo).
-///
-/// The department code stays read-only because the admin assigns it.
+/// Edit the resident's account data: personal fields, department (floor is
+/// derived from the department number), login email and the profile icon
+/// shown in the drawer (a gallery photo).
 class EditAccountScreen extends ConsumerStatefulWidget {
   const EditAccountScreen({super.key});
 
@@ -34,8 +33,8 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   late final TextEditingController _address = TextEditingController(
     text: _profile?.address ?? '',
   );
-  late final TextEditingController _floor = TextEditingController(
-    text: _profile?.floor ?? '',
+  late final TextEditingController _department = TextEditingController(
+    text: _initialDepartment,
   );
   late final TextEditingController _email = TextEditingController(
     text: _profile?.email ?? '',
@@ -60,7 +59,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     _name.dispose();
     _dni.dispose();
     _address.dispose();
-    _floor.dispose();
+    _department.dispose();
     _email.dispose();
     _password.dispose();
     _passwordConfirm.dispose();
@@ -69,9 +68,6 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final profile = ref.watch(
-      sessionRepositoryProvider.select((repo) => repo.current?.profile),
-    );
     final loading = ref.watch(authControllerProvider.select((s) => s.loading));
     final scheme = Theme.of(context).colorScheme;
 
@@ -138,10 +134,14 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                     onChanged: (v) => _address.text = v,
                   ),
                   const VerticalGap(12),
+                  // The department is editable; the floor is derived from it
+                  // (304 -> floor 3) and sent together with the code.
                   ControlledTextField(
-                    label: ref.tr('set.profile.floor'),
-                    value: _floor.text,
-                    onChanged: (v) => _floor.text = v,
+                    label: ref.tr('set.profile.department'),
+                    value: _department.text,
+                    onChanged: (v) => _department.text = v,
+                    keyboardType: TextInputType.number,
+                    supportingText: ref.tr('set.edit.department_hint'),
                   ),
                   const VerticalGap(12),
                   // The email is editable (it is the login) but validated by
@@ -152,14 +152,6 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                     onChanged: (v) => _email.text = v,
                     keyboardType: TextInputType.emailAddress,
                   ),
-                  if (profile?.code?.isNotEmpty == true) ...[
-                    const VerticalGap(12),
-                    // Department number only; the invite code is admin data.
-                    KeyValue(
-                      label: ref.tr('set.profile.department'),
-                      value: InviteCodes.departmentOf(profile!.code),
-                    ),
-                  ],
                   const VerticalGap(16),
                   AppButton(
                     text: ref.tr('set.edit.save'),
@@ -220,7 +212,15 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   }
 
   UserProfile? get _profile =>
-      ref.read(sessionRepositoryProvider).current?.profile;
+      ref.read(authControllerProvider).session?.profile;
+
+  /// Initial department number shown in the field, derived from the code
+  /// ("301-5jhe" → "301"); empty when the account has no code yet.
+  String get _initialDepartment {
+    final code = _profile?.code;
+    if (code == null || code.trim().isEmpty) return '';
+    return InviteCodes.departmentOf(code);
+  }
 
   /// Picks a photo, shrinks it (512px max, JPEG) and stores it as a small
   /// data URL so the backend keeps the profile icon self-contained.
@@ -267,15 +267,23 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   }
 
   Future<void> _saveProfile() async {
+    // The department encodes floor+unit (304 -> floor 3); parse it so the
+    // floor sent to the backend always matches the department number.
+    final parsed = DepartmentNumber.parse(_department.text);
+    if (parsed == null) {
+      _showMessage(ref.tr('err.INVALID_DEPARTMENT_NUMBER'), error: true);
+      return;
+    }
     final ok = await ref
         .read(authControllerProvider.notifier)
         .updateProfile(
           name: _name.text,
           dni: _dni.text,
           address: _address.text,
-          floor: _floor.text,
+          floor: parsed.floor,
           email: _email.text,
           avatar: _avatar,
+          code: _codeForDepartment(parsed.department),
         );
     if (!mounted) return;
     if (ok) {
@@ -284,6 +292,16 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
     } else {
       _showError();
     }
+  }
+
+  /// Rebuilds the resident's code for a new department number, keeping the
+  /// random invite suffix so the code stays unique ("301-5jhe" -> "402-5jhe";
+  /// a legacy plain "301" -> "402").
+  String _codeForDepartment(String department) {
+    final current = _profile?.code?.trim() ?? '';
+    final dash = current.indexOf('-');
+    if (dash >= 0) return '$department${current.substring(dash)}';
+    return department;
   }
 
   Future<void> _savePassword() async {

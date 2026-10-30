@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/language_controller.dart';
 import '../../core/invite_codes.dart';
-import '../../core/session_repository.dart';
 import '../../core/ui.dart';
 import '../auth/auth_controller.dart';
 import 'edit_account_screen.dart';
@@ -14,9 +13,9 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(
-      sessionRepositoryProvider.select((repo) => repo.current),
-    );
+    // Watch the auth controller (not the session repository, which is a plain
+    // non-reactive object) so an edited profile/email shows immediately.
+    final session = ref.watch(authControllerProvider.select((s) => s.session));
     final language = ref.watch(languageControllerProvider);
     final profile = session?.profile;
     final scheme = Theme.of(context).colorScheme;

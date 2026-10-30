@@ -33,6 +33,7 @@ class UserProfile {
 
   /// Copy with the editable profile fields replaced (used after a profile
   /// update so the session reflects the new values without a re-login).
+  /// [code] is the new department code when the resident changed apartment.
   UserProfile withProfile({
     required String name,
     String? dni,
@@ -40,6 +41,7 @@ class UserProfile {
     String? floor,
     String? email,
     String? avatar,
+    String? code,
   }) =>
       UserProfile(
         id: id,
@@ -47,7 +49,7 @@ class UserProfile {
         email: email ?? this.email,
         role: role,
         floor: floor,
-        code: code,
+        code: code ?? this.code,
         ownerAdminId: ownerAdminId,
         dni: dni,
         address: address,

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/dates.dart';
-import '../../core/session_repository.dart';
 import '../../core/ui.dart';
+import '../auth/auth_controller.dart';
 import '../spaces/socialspaces_models.dart';
 import 'dashboard_controller.dart';
 
@@ -15,8 +15,10 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(dashboardControllerProvider);
+    // Watch the auth controller (reactive) so the greeting reflects an edited
+    // name immediately, without waiting for a screen change.
     final name = ref.watch(
-      sessionRepositoryProvider.select((repo) => repo.current?.profile.name ?? ''),
+      authControllerProvider.select((s) => s.session?.profile.name ?? ''),
     );
 
     if (state.loading && state.fees.isEmpty && state.reservations.isEmpty) {
