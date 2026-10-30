@@ -210,8 +210,16 @@ class _FeeRow extends StatelessWidget {
             children: [
               Text(formatSoles(fee.amount), style: const TextStyle(fontWeight: FontWeight.w600)),
               StatusChip(
-                label: fee.isPaid ? 'rfin.status.paid'.trText() : 'rfin.status.pending'.trText(),
-                color: fee.isPaid ? bfSuccess : bfWarning,
+                label: fee.isPaid
+                    ? 'rfin.status.paid'.trText()
+                    : fee.isOverdue
+                        ? 'rfin.status.overdue'.trText()
+                        : 'rfin.status.pending'.trText(),
+                color: fee.isPaid
+                    ? bfSuccess
+                    : fee.isOverdue
+                        ? scheme.error
+                        : bfWarning,
               ),
             ],
           ),

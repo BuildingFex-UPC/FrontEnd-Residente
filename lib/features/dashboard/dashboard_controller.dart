@@ -117,6 +117,16 @@ class DashboardController extends Notifier<DashboardState> {
       final announcementsRepo = ref.read(announcementsRepositoryProvider);
       final residentId = ref.read(sessionRepositoryProvider).current?.profile.id ?? '';
 
+      // Apply the automatic late-fee (mora) pass first, exactly like the
+      // finance screen does. Without this the dashboard read stale amounts
+      // (e.g. 150.0 while Finanzas showed the 157.5 with mora already applied).
+      // Best-effort: never let that side effect blank the dashboard.
+      try {
+        await financeRepo.autoApplyLateFees();
+      } catch (_) {
+        // Ignore and still show the current (pre-mora) amounts.
+      }
+
       final results = await Future.wait<dynamic>([
         financeRepo.listFees(),
         financeRepo.listPayments(),

@@ -174,6 +174,7 @@ const Map<String, TextPair> _catalog = {
   'rfin.payment.fallbackConcept': (es: 'Cuota', en: 'Fee'),
   'rfin.status.paid': (es: 'Pagado', en: 'Paid'),
   'rfin.status.pending': (es: 'Pendiente', en: 'Pending'),
+  'rfin.status.overdue': (es: 'Vencido', en: 'Overdue'),
   'rfin.concept.maintenance': (es: 'Mantenimiento', en: 'Maintenance'),
   'rfin.concept.fee': (es: 'Cuota mantenimiento', en: 'Maintenance fee'),
   'rfin.month.current': (es: 'Mes actual', en: 'Current month'),

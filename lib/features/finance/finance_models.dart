@@ -28,6 +28,12 @@ class FeeItem {
   final String concept;
 
   bool get isPaid => status == 'Pagado';
+
+  /// True when the fee is unpaid and its due date has passed. The backend keeps
+  /// an overdue receipt's status as `Pending` (the mora lives in `lateFee` and
+  /// the checkout only accepts `Pending`), so "vencido" is derived from the
+  /// date here — mirroring the admin's `ResidentFinancialStatusCalculator`.
+  bool get isOverdue => !isPaid && Dates.isPastDue(dueDate);
 }
 
 class FinanceSettings {
