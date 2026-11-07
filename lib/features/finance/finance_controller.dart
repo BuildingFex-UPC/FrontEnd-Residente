@@ -86,23 +86,13 @@ class FinanceController extends Notifier<FinanceState> {
     }
   }
 
-  /// Starts the Mercado Pago checkout. Demo mode completes immediately;
-  /// otherwise [FinanceState.checkoutUrl] is set so the UI opens a WebView.
+  /// Starts the Mercado Pago checkout. Opens the Checkout Pro [initPoint]
+  /// in the in-app WebView for test/sandbox execution.
   Future<void> startCheckout({String? payerEmail}) async {
     if (state.startingCheckout) return;
     state = state.copyWith(startingCheckout: true, clearMessage: true);
     try {
       final checkout = await _repo.checkout(payerEmail: payerEmail);
-      if (checkout.demo) {
-        await _repo.confirm(demo: true);
-        await _repo.recordPayment(reference: checkout.preferenceId);
-        await load();
-        state = state.copyWith(
-          startingCheckout: false,
-          message: AppTexts.translate('rfin.msg.demoConfirmed'),
-        );
-        return;
-      }
       final initPoint = checkout.initPoint;
       if (initPoint == null || initPoint.isEmpty) {
         state = state.copyWith(
@@ -125,17 +115,29 @@ class FinanceController extends Notifier<FinanceState> {
   void dismissMessage() => state = state.copyWith(clearMessage: true);
 
   /// Confirms a payment after the WebView returns Mercado Pago redirect
-  /// params (`payment`, `status`, `payment_id`, `collection_id`).
+  /// params (`payment_id`, `collection_id`, `status`, `collection_status`).
   Future<void> handlePaymentReturn(Map<String, String> params) async {
     state = state.copyWith(clearCheckoutUrl: true, confirming: true);
     final paymentId = params['payment_id'] ??
         params['collection_id'] ??
         params['payment'];
-    final status = params['status'] ?? '';
+    final status = params['status'] ?? params['collection_status'] ?? '';
+
+    if (paymentId == null || paymentId.trim().isEmpty) {
+      await load();
+      state = state.copyWith(
+        confirming: false,
+        message: status == 'null' || status.isEmpty
+            ? null
+            : AppTexts.translate('rfin.msg.paymentFailed'),
+      );
+      return;
+    }
+
     try {
-      final confirmation = await _repo.confirm(paymentId: paymentId);
+      final confirmation = await _repo.confirm(paymentId: paymentId.trim());
       if (confirmation.reconciled) {
-        await _repo.recordPayment(reference: paymentId, paidAt: confirmation.paidAt);
+        // Backend handles all reconciliation and records payments idempotently.
         await load();
         final suffix = confirmation.itemsPaid > 0
             ? AppTexts.format('rfin.msg.itemsReconciled', {'n': '${confirmation.itemsPaid}'})
@@ -158,6 +160,7 @@ class FinanceController extends Notifier<FinanceState> {
         );
       }
     } catch (e) {
+      await load();
       state = state.copyWith(confirming: false, message: _messageOf(e));
     }
   }

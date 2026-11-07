@@ -213,7 +213,6 @@ class FinanceRepository {
   /// `POST api/v1/payments/confirm`
   Future<PaymentConfirmation> confirm({
     String? paymentId,
-    bool demo = false,
   }) =>
       apiCall(() async {
         final response = await _api.dio.post<dynamic>(
@@ -222,7 +221,6 @@ class FinanceRepository {
             'residentId': _residentId,
             'ownerAdminId': _session.activeDataOwnerId,
             'paymentId': paymentId,
-            'demo': demo,
           },
         );
         final data = (response.data as Map?)?.cast<String, dynamic>() ?? const {};
