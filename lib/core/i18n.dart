@@ -201,6 +201,7 @@ const Map<String, TextPair> _catalog = {
   'services.fieldEnd': (es: 'Fin', en: 'End'),
   'services.chooseTime': (es: 'Elegir hora', en: 'Pick a time'),
   'services.reservedSlots': (es: 'Horarios ya reservados:', en: 'Already booked slots:'),
+  'services.noReservedSlots': (es: 'No hay reservas para este día: el espacio está libre.', en: 'No reservations for this day: the space is free.'),
   'services.understood': (es: 'Entendido', en: 'Got it'),
   'services.reservedMessage': (es: 'Reserva confirmada en {name}.', en: 'Reservation confirmed at {name}.'),
 
