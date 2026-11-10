@@ -179,11 +179,13 @@ class _ReserveSheetState extends ConsumerState<_ReserveSheet> {
     final space = state.selectedSpace!;
     final scheme = Theme.of(context).colorScheme;
 
-    // Slots already taken for the selected date.
-    final busy = state.spaceReservations
-        .where((r) => r.date == state.date)
-        .map((r) => '${r.startTime} – ${r.endTime}')
-        .toList();
+    // US32: slots already taken for the selected date, ordered by start time.
+    final busyReservations = state.spaceReservations
+        .where((r) => r.date.length >= 10 && r.date.substring(0, 10) == state.date)
+        .toList()
+      ..sort((a, b) => a.startTime.compareTo(b.startTime));
+    final busy =
+        busyReservations.map((r) => '${r.startTime} – ${r.endTime}').toList();
 
     return Align(
       alignment: Alignment.bottomCenter,
@@ -259,13 +261,21 @@ class _ReserveSheetState extends ConsumerState<_ReserveSheet> {
                   ),
                 ],
               ),
-              if (busy.isNotEmpty) ...[
-                const VerticalGap(12),
+              // US32: always show the reserved schedule of the chosen day.
+              const VerticalGap(12),
+              Text(
+                ref.tr('services.reservedSlots'),
+                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+              ),
+              const VerticalGap(4),
+              if (state.loadingReservations)
+                const LinearProgressIndicator()
+              else if (busy.isEmpty)
                 Text(
-                  ref.tr('services.reservedSlots'),
-                  style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-                ),
-                const VerticalGap(4),
+                  ref.tr('services.noReservedSlots'),
+                  style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
+                )
+              else
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
@@ -274,7 +284,6 @@ class _ReserveSheetState extends ConsumerState<_ReserveSheet> {
                       StatusChip(label: slot, color: bfWarning),
                   ],
                 ),
-              ],
               if (state.formError != null) ...[
                 const VerticalGap(12),
                 Text(state.formError!, style: TextStyle(color: scheme.error)),
