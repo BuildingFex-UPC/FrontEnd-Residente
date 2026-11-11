@@ -3,7 +3,14 @@ import '../../core/dates.dart';
 /// Common areas published by admins and time-bounded reservations residents
 /// create against them.
 class Space {
-  Space({this.id, required this.name, this.description = '', this.capacity, this.imageUrl = ''});
+  Space({
+    this.id,
+    required this.name,
+    this.description = '',
+    this.capacity,
+    this.imageUrl = '',
+    this.cost = 0,
+  });
 
   final String? id;
   final String name;
@@ -11,12 +18,16 @@ class Space {
   final int? capacity;
   final String imageUrl;
 
+  /// Booking cost in soles, as configured by the admin (0 = free).
+  final double cost;
+
   factory Space.fromJson(Map<String, dynamic> json) => Space(
         id: json['id']?.toString(),
         name: json['name']?.toString() ?? '',
         description: json['description']?.toString() ?? '',
         capacity: (json['capacity'] as num?)?.toInt(),
         imageUrl: json['imageUrl']?.toString() ?? '',
+        cost: (json['cost'] as num?)?.toDouble() ?? 0,
       );
 }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/i18n.dart';
 import '../../core/ui.dart';
 import 'auth_controller.dart';
 
@@ -118,10 +119,9 @@ class _LoginForm extends ConsumerWidget {
           decoration: InputDecoration(labelText: ref.tr('auth.field.email')),
         ),
         const VerticalGap(16),
-        TextField(
+        _PasswordField(
           controller: passwordController,
-          obscureText: true,
-          decoration: InputDecoration(labelText: ref.tr('auth.field.password')),
+          label: ref.tr('auth.field.password'),
         ),
         if (state.error != null) ...[
           const VerticalGap(12),
@@ -142,6 +142,42 @@ class _LoginForm extends ConsumerWidget {
           child: Text(ref.tr('auth.link.have_invite')),
         ),
       ],
+    );
+  }
+}
+
+/// Password input with a show/hide toggle so residents can verify what they type.
+class _PasswordField extends StatefulWidget {
+  const _PasswordField({required this.controller, required this.label});
+
+  final TextEditingController controller;
+  final String label;
+
+  @override
+  State<_PasswordField> createState() => _PasswordFieldState();
+}
+
+class _PasswordFieldState extends State<_PasswordField> {
+  bool _visible = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget.controller,
+      obscureText: !_visible,
+      keyboardType: TextInputType.visiblePassword,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        suffixIcon: IconButton(
+          icon: Icon(
+            _visible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+          ),
+          tooltip: AppTexts.translate(
+            _visible ? 'auth.hide_password' : 'auth.show_password',
+          ),
+          onPressed: () => setState(() => _visible = !_visible),
+        ),
+      ),
     );
   }
 }

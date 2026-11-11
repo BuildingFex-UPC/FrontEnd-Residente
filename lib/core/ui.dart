@@ -172,6 +172,9 @@ class _ControlledTextFieldState extends State<ControlledTextField> {
   late final TextEditingController _controller =
       TextEditingController(text: widget.value);
 
+  /// Visibility of the masked content; only meaningful when [ControlledTextField.obscure] is set.
+  bool _visible = false;
+
   @override
   void didUpdateWidget(covariant ControlledTextField old) {
     super.didUpdateWidget(old);
@@ -189,7 +192,7 @@ class _ControlledTextFieldState extends State<ControlledTextField> {
   @override
   Widget build(BuildContext context) => TextField(
         controller: _controller,
-        obscureText: widget.obscure,
+        obscureText: widget.obscure && !_visible,
         keyboardType: widget.keyboardType,
         maxLines: widget.maxLines,
         onChanged: widget.onChanged,
@@ -198,6 +201,19 @@ class _ControlledTextFieldState extends State<ControlledTextField> {
           hintText: widget.placeholder,
           errorText: widget.errorText,
           helperText: widget.errorText == null ? widget.supportingText : null,
+          suffixIcon: widget.obscure
+              ? IconButton(
+                  icon: Icon(
+                    _visible
+                        ? Icons.visibility_off_outlined
+                        : Icons.visibility_outlined,
+                  ),
+                  tooltip: AppTexts.translate(
+                    _visible ? 'auth.hide_password' : 'auth.show_password',
+                  ),
+                  onPressed: () => setState(() => _visible = !_visible),
+                )
+              : null,
         ),
       );
 }

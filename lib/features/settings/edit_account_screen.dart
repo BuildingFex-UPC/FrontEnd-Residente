@@ -43,8 +43,6 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
   final _password = TextEditingController();
   final _passwordConfirm = TextEditingController();
 
-  bool _obscurePassword = true;
-
   /// Pending avatar (not persisted until "Save changes").
   String? _avatar;
 
@@ -171,7 +169,7 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                     label: ref.tr('set.edit.new_password'),
                     value: _password.text,
                     onChanged: (v) => _password.text = v,
-                    obscure: _obscurePassword,
+                    obscure: true,
                     keyboardType: TextInputType.visiblePassword,
                     supportingText: ref.tr('set.edit.password_hint'),
                   ),
@@ -180,22 +178,8 @@ class _EditAccountScreenState extends ConsumerState<EditAccountScreen> {
                     label: ref.tr('set.edit.confirm_password'),
                     value: _passwordConfirm.text,
                     onChanged: (v) => _passwordConfirm.text = v,
-                    obscure: _obscurePassword,
+                    obscure: true,
                     keyboardType: TextInputType.visiblePassword,
-                  ),
-                  const VerticalGap(8),
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: !_obscurePassword,
-                        onChanged: (v) =>
-                            setState(() => _obscurePassword = !(v ?? false)),
-                      ),
-                      Text(
-                        ref.tr('set.edit.show_password'),
-                        style: TextStyle(color: scheme.onSurfaceVariant),
-                      ),
-                    ],
                   ),
                   const VerticalGap(8),
                   AppOutlinedActionButton(

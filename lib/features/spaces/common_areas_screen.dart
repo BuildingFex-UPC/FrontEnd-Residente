@@ -8,11 +8,28 @@ import 'common_areas_controller.dart';
 import 'socialspaces_models.dart';
 
 /// Browse the building's common areas and reserve a time slot.
-class CommonAreasScreen extends ConsumerWidget {
+class CommonAreasScreen extends ConsumerStatefulWidget {
   const CommonAreasScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CommonAreasScreen> createState() => _CommonAreasScreenState();
+}
+
+class _CommonAreasScreenState extends ConsumerState<CommonAreasScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // The controller is cached (non-autoDispose), so its constructor only runs
+    // once. Reload every time this tab is shown so a space published (or a
+    // cost edited) by the admin appears immediately, without restarting the app.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(socialspacesControllerProvider.notifier).reload();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(socialspacesControllerProvider);
     final controller = ref.read(socialspacesControllerProvider.notifier);
 
@@ -27,7 +44,9 @@ class CommonAreasScreen extends ConsumerWidget {
       controller.dismissMessage();
     });
 
-    if (state.loading) return const FullScreenLoading();
+    // Keep the cached list on screen while it refreshes; only show the full
+    // screen loader the very first time (empty list).
+    if (state.loading && state.spaces.isEmpty) return const FullScreenLoading();
     if (state.error != null && state.spaces.isEmpty) {
       return ErrorState(
         state.error!,
@@ -42,39 +61,43 @@ class CommonAreasScreen extends ConsumerWidget {
           // `Expanded` constrains the list to the available space so a long
           // list can't overflow and collide with the reserve sheet.
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
-                Text(
-                  ref.tr('services.title'),
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  ref.tr('services.subtitle'),
-                  style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                ),
-                const VerticalGap(16),
-                Text(
-                  ref.tr('services.availableTitle'),
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const VerticalGap(8),
-                if (state.spaces.isEmpty)
-                  EmptyState(ref.tr('services.empty'))
-                else
-                  for (final space in state.spaces)
-                    _SpaceCard(
-                      space: space,
-                      selected: state.selectedSpace?.id == space.id,
-                      onSelect: () => controller.selectSpace(space),
-                    ),
-              ],
+            child: RefreshIndicator(
+              onRefresh: () => controller.reload(),
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                children: [
+                  Text(
+                    ref.tr('services.title'),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    ref.tr('services.subtitle'),
+                    style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                  ),
+                  const VerticalGap(16),
+                  Text(
+                    ref.tr('services.availableTitle'),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const VerticalGap(8),
+                  if (state.spaces.isEmpty)
+                    EmptyState(ref.tr('services.empty'))
+                  else
+                    for (final space in state.spaces)
+                      _SpaceCard(
+                        space: space,
+                        selected: state.selectedSpace?.id == space.id,
+                        onSelect: () => controller.selectSpace(space),
+                      ),
+                ],
+              ),
             ),
           ),
           if (state.selectedSpace != null)
@@ -148,6 +171,19 @@ class _SpaceCard extends StatelessWidget {
                 const VerticalGap(8),
                 StatusChip(label: 'services.capacity'.trFormat({'n': '${space.capacity}'}), color: scheme.primary),
               ],
+              const VerticalGap(8),
+              Row(
+                children: [
+                  Icon(Icons.payments_outlined, size: 16, color: scheme.primary),
+                  const SizedBox(width: 6),
+                  Text(
+                    space.cost > 0
+                        ? 'services.cost'.trFormat({'n': space.cost.toStringAsFixed(2)})
+                        : 'services.free'.trText(),
+                    style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
+                  ),
+                ],
+              ),
               const VerticalGap(12),
               AppOutlinedActionButton(
                 text: 'services.reserve'.trText(),
@@ -225,6 +261,13 @@ class _ReserveSheetState extends ConsumerState<_ReserveSheet> {
                     onPressed: controller.clearSelection,
                   ),
                 ],
+              ),
+              const VerticalGap(4),
+              Text(
+                space.cost > 0
+                    ? 'services.cost'.trFormat({'n': space.cost.toStringAsFixed(2)})
+                    : 'services.free'.trText(),
+                style: TextStyle(fontSize: 13, color: scheme.onSurfaceVariant),
               ),
               const VerticalGap(12),
               _PickerField(
