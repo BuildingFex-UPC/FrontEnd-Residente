@@ -10,6 +10,8 @@ class Space {
     this.capacity,
     this.imageUrl = '',
     this.cost = 0,
+    this.rules = '',
+    this.underMaintenance = false,
   });
 
   final String? id;
@@ -21,6 +23,12 @@ class Space {
   /// Booking cost in soles, as configured by the admin (0 = free).
   final double cost;
 
+  /// US19: usage rules the admin published for this area.
+  final String rules;
+
+  /// US19: when true the area is under maintenance and reserves are blocked.
+  final bool underMaintenance;
+
   factory Space.fromJson(Map<String, dynamic> json) => Space(
         id: json['id']?.toString(),
         name: json['name']?.toString() ?? '',
@@ -28,6 +36,8 @@ class Space {
         capacity: (json['capacity'] as num?)?.toInt(),
         imageUrl: json['imageUrl']?.toString() ?? '',
         cost: (json['cost'] as num?)?.toDouble() ?? 0,
+        rules: json['rules']?.toString() ?? '',
+        underMaintenance: json['underMaintenance'] == true,
       );
 }
 

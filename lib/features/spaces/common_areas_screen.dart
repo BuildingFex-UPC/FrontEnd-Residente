@@ -160,11 +160,31 @@ class _SpaceCard extends StatelessWidget {
                   if (selected) Icon(Icons.check_circle, color: scheme.primary, size: 20),
                 ],
               ),
+              if (space.underMaintenance) ...[
+                const VerticalGap(8),
+                StatusChip(label: 'services.maintenance'.trText(), color: bfWarning),
+              ],
               if (space.description.isNotEmpty) ...[
                 const VerticalGap(8),
                 Text(
                   space.description,
                   style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
+                ),
+              ],
+              if (space.rules.isNotEmpty) ...[
+                const VerticalGap(8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.rule_outlined, size: 16, color: scheme.onSurfaceVariant),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        space.rules,
+                        style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 13),
+                      ),
+                    ),
+                  ],
                 ),
               ],
               if (space.capacity != null) ...[
@@ -185,9 +205,12 @@ class _SpaceCard extends StatelessWidget {
                 ],
               ),
               const VerticalGap(12),
+              // US19: areas under maintenance can't be reserved (AC02).
               AppOutlinedActionButton(
-                text: 'services.reserve'.trText(),
-                enabled: !selected,
+                text: space.underMaintenance
+                    ? 'services.reserveDisabled'.trText()
+                    : 'services.reserve'.trText(),
+                enabled: !selected && !space.underMaintenance,
                 onPressed: onSelect,
               ),
             ],
