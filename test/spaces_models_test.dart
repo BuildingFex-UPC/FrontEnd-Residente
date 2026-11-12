@@ -27,4 +27,32 @@ void main() {
       expect(space.cost, 0);
     });
   });
+
+  group('Space.fromJson US19 (rules + maintenance)', () {
+    test('parses rules and underMaintenance exposed by the compat API', () {
+      final space = Space.fromJson(const {
+        'id': 'salon-1',
+        'name': 'Salón social',
+        'rules': 'No correr dentro del área.',
+        'underMaintenance': true,
+      });
+      expect(space.rules, 'No correr dentro del área.');
+      expect(space.underMaintenance, true);
+    });
+
+    test('is available with no rules when the API omits the fields', () {
+      final space = Space.fromJson(const {'id': 'terraza', 'name': 'Terraza'});
+      expect(space.rules, '');
+      expect(space.underMaintenance, false);
+    });
+
+    test('treats a non-true maintenance flag as available', () {
+      final space = Space.fromJson(const {
+        'id': 'parrilla',
+        'name': 'Parrilla',
+        'underMaintenance': 'false',
+      });
+      expect(space.underMaintenance, false);
+    });
+  });
 }
