@@ -125,6 +125,7 @@ const Map<String, TextPair> _catalog = {
   'shell.language': (es: 'Idioma', en: 'Language'),
   'shell.logout': (es: 'Cerrar sesión', en: 'Log out'),
   'shell.openMenu': (es: 'Abrir menú', en: 'Open menu'),
+  'shell.close': (es: 'Cerrar', en: 'Close'),
   'shell.role.resident': (es: 'Residente', en: 'Resident'),
   'shell.nav.dashboard': (es: 'Dashboard', en: 'Dashboard'),
   'shell.nav.finances': (es: 'Finanzas', en: 'Finances'),

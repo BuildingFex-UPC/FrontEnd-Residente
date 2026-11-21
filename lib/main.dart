@@ -43,7 +43,9 @@ class BuildingFexResidentApp extends ConsumerWidget {
     return MaterialApp(
       title: 'BuildingFex Residente',
       debugShowCheckedModeBanner: false,
-      theme: buildTheme(),
+      theme: buildTheme(brightness: Brightness.light),
+      darkTheme: buildTheme(brightness: Brightness.dark),
+      themeMode: ThemeMode.system,
       locale: Locale(language),
       supportedLocales: const [Locale('es'), Locale('en')],
       localizationsDelegates: const [

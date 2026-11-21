@@ -233,6 +233,8 @@ class _InviteSheet extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
+                // QR codes need a light background to be scannable in both
+                // themes, so this one intentionally stays white.
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: scheme.outlineVariant),
@@ -293,9 +295,9 @@ class _GuestsEditorState extends ConsumerState<_GuestsEditor> {
       child: Container(
         width: double.infinity,
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: bfCardColor(Theme.of(context).brightness),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         // Reserve room for the on-screen keyboard so the guest fields and the
         // save button are never covered while typing.
@@ -323,6 +325,7 @@ class _GuestsEditorState extends ConsumerState<_GuestsEditor> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
+                    tooltip: ref.tr('shell.close'),
                     onPressed: controller.closeEditor,
                   ),
                 ],

@@ -137,7 +137,16 @@ class _SpaceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return Card(
+    return Semantics(
+      // Android Core App Quality (Accessibility): one meaningful node per card
+      // (name, status, rules, cost and the reserve action/state), so TalkBack
+      // reads the whole space at once and reports the selection.
+      button: true,
+      selected: selected,
+      excludeSemantics: true,
+      label: _semanticLabel(),
+      onTap: onSelect,
+      child: Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -216,8 +225,28 @@ class _SpaceCard extends StatelessWidget {
             ],
           ),
         ),
+        ),
       ),
     );
+  }
+
+  /// Screen-reader label: everything the card communicates visually, in order.
+  String _semanticLabel() {
+    final parts = <String>[
+      space.name,
+      if (space.underMaintenance) 'services.maintenance'.trText(),
+      if (space.description.isNotEmpty) space.description,
+      if (space.rules.isNotEmpty) space.rules,
+      if (space.capacity != null)
+        'services.capacity'.trFormat({'n': '${space.capacity}'}),
+      space.cost > 0
+          ? 'services.cost'.trFormat({'n': space.cost.toStringAsFixed(2)})
+          : 'services.free'.trText(),
+      space.underMaintenance
+          ? 'services.reserveDisabled'.trText()
+          : 'services.reserve'.trText(),
+    ];
+    return parts.join('. ');
   }
 }
 
@@ -251,9 +280,9 @@ class _ReserveSheetState extends ConsumerState<_ReserveSheet> {
       child: Container(
         width: double.infinity,
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: bfCardColor(Theme.of(context).brightness),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         // Reserve room for the on-screen keyboard so the fields and the
         // confirm button are never covered while typing.
@@ -281,6 +310,7 @@ class _ReserveSheetState extends ConsumerState<_ReserveSheet> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
+                    tooltip: ref.tr('shell.close'),
                     onPressed: controller.clearSelection,
                   ),
                 ],

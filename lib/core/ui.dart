@@ -22,23 +22,38 @@ const Color bfSuccess = Color(0xFF2E7D32);
 const Color bfWarning = Color(0xFFED6C02);
 const Color bfSurface = Color(0xFFF7F8FC);
 
-ThemeData buildTheme() => ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(seedColor: bfPrimary),
-      scaffoldBackgroundColor: bfSurface,
-      inputDecorationTheme: const InputDecorationTheme(
-        border: OutlineInputBorder(),
-        isDense: true,
+/// Dark-mode counterparts of the brand surfaces.
+const Color bfSurfaceDark = Color(0xFF121318);
+const Color bfCardDark = Color(0xFF1D1F27);
+
+/// Card/sheet background: white in light mode, an elevated dark surface at
+/// night (Android Core App Quality: adapt to the system theme).
+Color bfCardColor(Brightness brightness) =>
+    brightness == Brightness.dark ? bfCardDark : Colors.white;
+
+/// Builds the app theme for the given [brightness] so the same widget tree
+/// works in both light and dark mode.
+ThemeData buildTheme({Brightness brightness = Brightness.light}) {
+  final isDark = brightness == Brightness.dark;
+  return ThemeData(
+    useMaterial3: true,
+    colorScheme:
+        ColorScheme.fromSeed(seedColor: bfPrimary, brightness: brightness),
+    scaffoldBackgroundColor: isDark ? bfSurfaceDark : bfSurface,
+    inputDecorationTheme: const InputDecorationTheme(
+      border: OutlineInputBorder(),
+      isDense: true,
+    ),
+    cardTheme: CardThemeData(
+      elevation: 0,
+      color: bfCardColor(brightness),
+      margin: EdgeInsets.zero,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
-      cardTheme: const CardThemeData(
-        elevation: 0,
-        color: Colors.white,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
-      ),
-    );
+    ),
+  );
+}
 
 class VerticalGap extends StatelessWidget {
   const VerticalGap(this.size, {super.key});
@@ -128,11 +143,17 @@ class AppOutlinedActionButton extends StatelessWidget {
   final bool enabled;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-        width: double.infinity,
-        child: OutlinedButton(
-          onPressed: enabled ? onPressed : null,
-          child: Text(text),
+  Widget build(BuildContext context) => Semantics(
+        // Android Core App Quality (Accessibility): announce the button role
+        // and its disabled state (e.g. a space under maintenance) explicitly.
+        button: true,
+        enabled: enabled,
+        child: SizedBox(
+          width: double.infinity,
+          child: OutlinedButton(
+            onPressed: enabled ? onPressed : null,
+            child: Text(text),
+          ),
         ),
       );
 }
@@ -350,15 +371,20 @@ class StatusChip extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+  Widget build(BuildContext context) => Semantics(
+        // Group the chip so screen readers announce it as a single status
+        // (e.g. "En mantenimiento") instead of loose characters.
+        container: true,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
+          ),
         ),
       );
 }

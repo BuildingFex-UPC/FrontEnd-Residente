@@ -201,9 +201,9 @@ class _EditDialogState extends ConsumerState<_EditDialog> {
       child: Container(
         width: double.infinity,
         constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.8),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: bfCardColor(Theme.of(context).brightness),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         // Reserve room for the on-screen keyboard so the field and the save
         // button are never covered while typing.
@@ -231,6 +231,7 @@ class _EditDialogState extends ConsumerState<_EditDialog> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
+                    tooltip: ref.tr('shell.close'),
                     onPressed: controller.closeEditor,
                   ),
                 ],
