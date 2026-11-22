@@ -52,7 +52,9 @@ class DashboardScreen extends ConsumerWidget {
               _KpiCard(
                 label: ref.tr('dash.pendingBalance'),
                 value: formatSoles(summary.pending),
-                color: summary.pending > 0 ? bfWarning : bfSuccess,
+                color: summary.pending > 0
+                    ? bfWarningText(Theme.of(context).brightness)
+                    : bfSuccessText(Theme.of(context).brightness),
               ),
               if (summary.overdue > 0) ...[
                 const VerticalGap(8),

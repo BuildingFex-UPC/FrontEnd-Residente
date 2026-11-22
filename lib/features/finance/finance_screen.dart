@@ -77,7 +77,9 @@ class _FinanceScreenState extends ConsumerState<FinanceScreen> {
                     child: _StatCard(
                       label: ref.tr('rfin.pending'),
                       value: formatSoles(account.pendingAmount),
-                      color: bfWarning,
+                      // 18 sp bold: just under the large-text threshold, so it
+                      // uses the 4.5:1 warning tone.
+                      color: bfWarningText(Theme.of(context).brightness),
                     ),
                   ),
                   const SizedBox(width: 12),
