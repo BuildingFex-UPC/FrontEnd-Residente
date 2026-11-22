@@ -26,6 +26,22 @@ const Color bfSurface = Color(0xFFF7F8FC);
 const Color bfSurfaceDark = Color(0xFF121318);
 const Color bfCardDark = Color(0xFF1D1F27);
 
+/// Text-safe warning tone (Android `Visual_Contrast`, 4.5:1).
+///
+/// [bfWarning] only reaches ≈3.1:1 on light backgrounds, so it is fine for
+/// large values (20 sp bold) but not for 12-18 sp text: light mode uses a
+/// darker orange (≈5.5:1) and dark mode a lighter one (≈7:1), both of which
+/// also clear 4.5:1 over the chip's own 12% tint.
+Color bfWarningText(Brightness brightness) => brightness == Brightness.dark
+    ? const Color(0xFFFF9142)
+    : const Color(0xFFAB4E00);
+
+/// Text-safe success tone: [bfSuccess] is 5.1:1 on white but only ≈4.4:1 over
+/// its own 12% chip tint in light mode and ≈3.2:1 on dark cards.
+Color bfSuccessText(Brightness brightness) => brightness == Brightness.dark
+    ? const Color(0xFF66BB6A)
+    : const Color(0xFF256B29);
+
 /// Card/sheet background: white in light mode, an elevated dark surface at
 /// night (Android Core App Quality: adapt to the system theme).
 Color bfCardColor(Brightness brightness) =>
@@ -371,20 +387,30 @@ class StatusChip extends StatelessWidget {
   final Color color;
 
   @override
-  Widget build(BuildContext context) => Semantics(
-        // Group the chip so screen readers announce it as a single status
-        // (e.g. "En mantenimiento") instead of loose characters.
-        container: true,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600),
-          ),
+  Widget build(BuildContext context) {
+    // Chip text is 12 sp: the warning/success oranges must meet 4.5:1 over
+    // the chip's own tint, so swap in the readable tone for the theme.
+    final brightness = Theme.of(context).brightness;
+    final tone = color == bfWarning
+        ? bfWarningText(brightness)
+        : color == bfSuccess
+            ? bfSuccessText(brightness)
+            : color;
+    return Semantics(
+      // Group the chip so screen readers announce it as a single status
+      // (e.g. "En mantenimiento") instead of loose characters.
+      container: true,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: tone.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(999),
         ),
-      );
+        child: Text(
+          label,
+          style: TextStyle(color: tone, fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
 }
