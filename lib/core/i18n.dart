@@ -264,6 +264,14 @@ const Map<String, TextPair> _catalog = {
   'inc.msg.updated': (es: 'Incidencia actualizada.', en: 'Incident updated.'),
   'inc.msg.deleted': (es: 'Incidencia eliminada.', en: 'Incident deleted.'),
 
+  // --------------------------------------------------------- notifications
+  'notif.title': (es: 'Notificaciones', en: 'Notifications'),
+  'notif.empty': (es: 'No tienes notificaciones pendientes.', en: 'No pending notifications.'),
+  'notif.markAllRead': (es: 'Marcar todas como leídas', en: 'Mark all as read'),
+  'notif.resolvedAlert': (es: '¡Tu incidente ha sido resuelto!', en: 'Your incident has been resolved!'),
+  'notif.view': (es: 'Ver incidencias', en: 'View incidents'),
+  'notif.close': (es: 'Cerrar', en: 'Close'),
+
   // --------------------------------------------------------------- support
   'sup.resident.title': (es: 'Soporte técnico', en: 'Technical support'),
   'sup.resident.subtitle': (es: 'Contacta al equipo de soporte de tu condominio.', en: "Contact your condominium's support team."),
