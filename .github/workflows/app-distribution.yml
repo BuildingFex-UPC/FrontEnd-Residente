@@ -1,0 +1,53 @@
+name: Firebase App Distribution
+
+# Sube un build debug a Firebase App Distribution cada vez que se mergea a main.
+# Requiere los secrets del repo:
+#   FIREBASE_SERVICE_ACCOUNT  -> contenido JSON de la service account
+#   FIREBASE_APP_ID           -> 1:576641251784:android:daf12237a865fae49fe8fd
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: app-distribution-residente
+  cancel-in-progress: true
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Build debug APK
+        run: flutter build apk --debug
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Write service account key
+        env:
+          SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: printf '%s' "$SA_JSON" > "$RUNNER_TEMP/service-account.json"
+
+      - name: Upload to App Distribution
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/service-account.json
+        run: |
+          firebase appdistribution:distribute build/app/outputs/flutter-apk/app-debug.apk \
+            --app "${{ secrets.FIREBASE_APP_ID }}" \
+            --groups pruebas-qa \
+            --project buildingfex \
+            --release-notes "Build automático desde GitHub — $(git log -1 --pretty=%s) ($(git log -1 --pretty=%ad --date=short))"
