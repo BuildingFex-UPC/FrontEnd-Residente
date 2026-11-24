@@ -38,3 +38,8 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  # Legal text shown before sign-up (Terms & Conditions acceptance) and from
+  # Settings › Account, rendered in an in-app WebView.
+  assets:
+    - assets/terms_and_conditions.html
