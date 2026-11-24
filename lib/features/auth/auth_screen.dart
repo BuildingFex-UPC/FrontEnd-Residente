@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/i18n.dart';
 import '../../core/ui.dart';
+import '../legal/terms_screen.dart';
 import 'auth_controller.dart';
 
 /// Login + invite-code activation for residents.
@@ -182,7 +183,7 @@ class _PasswordFieldState extends State<_PasswordField> {
   }
 }
 
-class _InviteSection extends ConsumerWidget {
+class _InviteSection extends ConsumerStatefulWidget {
   const _InviteSection({
     required this.state,
     required this.codeController,
@@ -196,7 +197,13 @@ class _InviteSection extends ConsumerWidget {
   final TextEditingController passwordController;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_InviteSection> createState() => _InviteSectionState();
+}
+
+class _InviteSectionState extends ConsumerState<_InviteSection> {
+  @override
+  Widget build(BuildContext context) {
+    final state = widget.state;
     final resident = state.inviteResident;
     final controller = ref.read(authControllerProvider.notifier);
 
@@ -270,14 +277,59 @@ class _InviteSection extends ConsumerWidget {
             Text(state.inviteError!,
                 style: TextStyle(color: Theme.of(context).colorScheme.error)),
           ],
+          const VerticalGap(8),
+          _TermsAcceptance(
+            accepted: state.inviteTermsAccepted,
+            onChanged: controller.onInviteTermsChange,
+          ),
           const VerticalGap(16),
           AppButton(
             text: ref.tr('auth.button.access'),
             loading: state.loading,
-            onPressed: controller.acceptInvite,
+            onPressed:
+                state.inviteTermsAccepted ? controller.acceptInvite : null,
           ),
         ],
         TextButton(onPressed: controller.closeInviteMode, child: Text(ref.tr('auth.link.back_to_login'))),
+      ],
+    );
+  }
+}
+
+/// Terms & Conditions acceptance for the sign-up flow: a checkbox (merged
+/// with its label for TalkBack) plus a shortcut to read the document before
+/// ticking it. The account cannot be created until it is checked.
+class _TermsAcceptance extends StatelessWidget {
+  const _TermsAcceptance({required this.accepted, required this.onChanged});
+
+  final bool accepted;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = AppTexts.translate('auth.terms.accept');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        // CheckboxListTile merges the checkbox state with its label for
+        // screen readers and makes the whole row (label included) tappable.
+        CheckboxListTile(
+          value: accepted,
+          onChanged: (value) => onChanged(value ?? false),
+          title: Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          contentPadding: EdgeInsets.zero,
+          dense: true,
+          controlAffinity: ListTileControlAffinity.leading,
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => const TermsScreen()),
+          ),
+          child: Text(AppTexts.translate('auth.terms.read')),
+        ),
       ],
     );
   }

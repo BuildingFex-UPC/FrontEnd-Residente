@@ -5,6 +5,7 @@ import '../../core/language_controller.dart';
 import '../../core/invite_codes.dart';
 import '../../core/ui.dart';
 import '../auth/auth_controller.dart';
+import '../legal/terms_screen.dart';
 import 'edit_account_screen.dart';
 
 /// Profile + language + session (settings).
@@ -79,6 +80,15 @@ class SettingsScreen extends ConsumerWidget {
                   onPressed: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
                       builder: (_) => const EditAccountScreen(),
+                    ),
+                  ),
+                ),
+                const VerticalGap(8),
+                AppOutlinedActionButton(
+                  text: ref.tr('set.terms.title'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const TermsScreen(),
                     ),
                   ),
                 ),

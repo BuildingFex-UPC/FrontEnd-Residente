@@ -26,6 +26,7 @@ class AuthState {
     this.inviteResident,
     this.inviteEmail = '',
     this.invitePassword = '',
+    this.inviteTermsAccepted = false,
   });
 
   final bool initialized;
@@ -39,6 +40,10 @@ class AuthState {
   final ResidentInvite? inviteResident;
   final String inviteEmail;
   final String invitePassword;
+
+  /// Whether the user has ticked the Terms & Conditions acceptance required
+  /// before the account can be created (`acceptInvite`).
+  final bool inviteTermsAccepted;
 
   bool get hasSession => session != null;
 
@@ -58,6 +63,7 @@ class AuthState {
     bool clearInviteResident = false,
     String? inviteEmail,
     String? invitePassword,
+    bool? inviteTermsAccepted,
   }) =>
       AuthState(
         initialized: initialized ?? this.initialized,
@@ -72,6 +78,7 @@ class AuthState {
             clearInviteResident ? null : (inviteResident ?? this.inviteResident),
         inviteEmail: inviteEmail ?? this.inviteEmail,
         invitePassword: invitePassword ?? this.invitePassword,
+        inviteTermsAccepted: inviteTermsAccepted ?? this.inviteTermsAccepted,
       );
 }
 
@@ -120,6 +127,7 @@ class AuthController extends Notifier<AuthState> {
         clearInviteError: true,
         clearError: true,
         clearInviteResident: true,
+        inviteTermsAccepted: false,
       );
 
   void closeInviteMode() {
@@ -129,6 +137,7 @@ class AuthController extends Notifier<AuthState> {
       clearInviteError: true,
       clearInviteResident: true,
       inviteCode: '',
+      inviteTermsAccepted: false,
     );
   }
 
@@ -190,6 +199,9 @@ class AuthController extends Notifier<AuthState> {
   void onInvitePasswordChange(String value) =>
       state = state.copyWith(invitePassword: value, clearInviteError: true);
 
+  void onInviteTermsChange(bool accepted) =>
+      state = state.copyWith(inviteTermsAccepted: accepted);
+
   Future<void> acceptInvite() async {
     final s = state;
     final resident = s.inviteResident;
@@ -200,9 +212,14 @@ class AuthController extends Notifier<AuthState> {
     final passwordError = s.invitePassword.length >= 6
         ? null
         : AppTexts.translate('auth.error.min_6');
-    if (emailError != null || passwordError != null) {
+    final termsError = s.inviteTermsAccepted
+        ? null
+        : AppTexts.translate('auth.error.terms_required');
+    if (emailError != null || passwordError != null || termsError != null) {
       state = state.copyWith(
-        inviteError: [emailError, passwordError].whereType<String>().join(' '),
+        inviteError: [emailError, passwordError, termsError]
+            .whereType<String>()
+            .join(' '),
       );
       return;
     }
